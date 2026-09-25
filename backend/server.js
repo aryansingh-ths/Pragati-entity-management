@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -720,6 +721,15 @@ app.delete('/api/admin/staff/:userId', async (req, res) => {
 });
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
+
+// Serve static frontend files (if built and running in unified deployment)
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Pragati Control Plane running on http://localhost:${PORT}`);
 });
