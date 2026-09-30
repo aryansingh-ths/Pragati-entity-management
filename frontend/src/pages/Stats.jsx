@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar.jsx';
-import Topbar from '../components/Topbar.jsx';
+import AppShell from '../components/AppShell.jsx';
 import StatCard from '../components/StatCard.jsx';
 import { apiFetch } from '../api/client.js';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -90,11 +89,7 @@ export default function Stats() {
   const totalEntities = stats?.total_entities || 0;
 
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <div className="main-content">
-        <Topbar breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: 'Global Stats' }]} />
-        <div className="page-container fade-in">
+    <AppShell breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: 'Global Stats' }]}>
           <div className="dashboard-header">
             <h1>Global Statistics</h1>
             <p>Aggregate metrics across all Pragati entities and products.</p>
@@ -110,7 +105,7 @@ export default function Stats() {
           </div>
 
           {/* Two-column breakdown */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
+          <div className="detail-grid" style={{ marginBottom: 28 }}>
             {/* Status Breakdown */}
             <div className="section-card">
               <div className="section-heading">By Status</div>
@@ -225,8 +220,6 @@ export default function Stats() {
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </div>
+    </AppShell>
   );
 }

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import Topbar from '../components/Topbar.jsx';
-import Sidebar from '../components/Sidebar.jsx';
+import AppShell from '../components/AppShell.jsx';
 import { apiFetch } from '../api/client.js';
 
 export default function AuditLogs() {
@@ -33,12 +32,7 @@ export default function AuditLogs() {
   };
 
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <div className="main-content">
-        <Topbar title="Audit Logs" breadcrumbs={['System', 'Audit Logs']} />
-      
-      <div className="page-container">
+    <AppShell title="Audit Logs" breadcrumbs={[{ label: 'System' }, { label: 'Audit Logs' }]}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-1)' }}>System Audit Logs</h1>
           <p style={{ color: 'var(--text-2)', fontSize: 14, marginTop: 4 }}>
@@ -98,8 +92,6 @@ export default function AuditLogs() {
             </table>
           )}
         </div>
-      </div>
-    </div>
-    </div>
+    </AppShell>
   );
 }

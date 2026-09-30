@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../api/client.js';
-import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
+import AppShell from '../components/AppShell';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -117,12 +116,7 @@ export default function Products() {
 
 
   return (
-    <div className="layout">
-      <Sidebar />
-      <div className="main-content">
-        <Topbar breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: 'Products' }]} />
-        
-        <div className="page-container">
+    <AppShell breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: 'Products' }]}>
           <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h1>Global Products</h1>
@@ -211,8 +205,6 @@ export default function Products() {
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </div>
+    </AppShell>
   );
 }

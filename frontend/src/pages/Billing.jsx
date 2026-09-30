@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../api/client.js';
-import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
+import AppShell from '../components/AppShell';
 
 export default function Billing() {
   const [billingData, setBillingData] = useState([]);
@@ -28,12 +27,7 @@ export default function Billing() {
   const totalMRR = billingData.reduce((acc, curr) => acc + curr.mrr, 0);
 
   return (
-    <div className="layout">
-      <Sidebar />
-      <div className="main-content">
-        <Topbar breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: 'Billing' }]} />
-        
-        <div className="page-container">
+    <AppShell breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: 'Billing' }]}>
           <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h1>Entity Billing & Finance</h1>
@@ -89,8 +83,6 @@ export default function Billing() {
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </div>
+    </AppShell>
   );
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../components/Sidebar.jsx';
-import Topbar from '../components/Topbar.jsx';
+import AppShell from '../components/AppShell.jsx';
 import StatCard from '../components/StatCard.jsx';
 import EntityTable from '../components/EntityTable.jsx';
 import CreateEntityDrawer from '../components/CreateEntityDrawer.jsx';
@@ -47,62 +46,58 @@ export default function Entities() {
   }
 
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <div className="main-content">
-        <Topbar title="Entities" />
-        <div className="page-container fade-in">
-          {/* Header */}
-          <div className="dashboard-header">
-            <h1>Entity Management</h1>
-          </div>
+    <>
+      <AppShell title="Entities">
+        {/* Header */}
+        <div className="dashboard-header">
+          <h1>Entity Management</h1>
+        </div>
 
-          {/* Stats Banner */}
-          <div className="stats-banner">
-            <StatCard
-              label="Total Entities"
-              value={stats?.total_entities}
-              icon="corporate_fare"
-              color="var(--accent)"
-            />
-            <StatCard
-              label="Active"
-              value={stats?.by_status?.active}
-              icon="check_circle"
-              color="var(--success)"
-            />
-            <StatCard
-              label="Suspended"
-              value={stats?.by_status?.suspended}
-              icon="pause_circle"
-              color="var(--danger)"
-            />
-            <StatCard
-              label="Total Users"
-              value={stats?.total_users}
-              icon="group"
-              color="#a78bfa"
-            />
-          </div>
-
-          {/* Entity Table with toolbar */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowDrawer(true)}
-            >
-              <span className="material-symbols-outlined">add_business</span>
-              New Entity
-            </button>
-          </div>
-
-          <EntityTable
-            entities={entities}
-            loading={loadingEntities}
-            onRefresh={() => { fetchEntities(); fetchStats(); }}
+        {/* Stats Banner */}
+        <div className="stats-banner">
+          <StatCard
+            label="Total Entities"
+            value={stats?.total_entities}
+            icon="corporate_fare"
+            color="var(--accent)"
+          />
+          <StatCard
+            label="Active"
+            value={stats?.by_status?.active}
+            icon="check_circle"
+            color="var(--success)"
+          />
+          <StatCard
+            label="Suspended"
+            value={stats?.by_status?.suspended}
+            icon="pause_circle"
+            color="var(--danger)"
+          />
+          <StatCard
+            label="Total Users"
+            value={stats?.total_users}
+            icon="group"
+            color="#a78bfa"
           />
         </div>
-      </div>
+
+        {/* Entity Table with toolbar */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowDrawer(true)}
+          >
+            <span className="material-symbols-outlined">add_business</span>
+            New Entity
+          </button>
+        </div>
+
+        <EntityTable
+          entities={entities}
+          loading={loadingEntities}
+          onRefresh={() => { fetchEntities(); fetchStats(); }}
+        />
+      </AppShell>
 
       {/* Create Entity Drawer */}
       {showDrawer && (
@@ -119,6 +114,6 @@ export default function Entities() {
           onClose={() => setSuccessData(null)}
         />
       )}
-    </div>
+    </>
   );
 }

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import Sidebar from '../components/Sidebar.jsx';
-import Topbar from '../components/Topbar.jsx';
+import AppShell from '../components/AppShell.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { ProductBadgeList } from '../components/ProductBadge.jsx';
 import { apiFetch } from '../api/client.js';
@@ -590,45 +589,30 @@ export default function EntityDetail() {
 
   if (loading) {
     return (
-      <div className="app-layout">
-        <Sidebar />
-        <div className="main-content">
-          <Topbar breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: '…' }]} />
-          <div className="page-container"><div className="page-loading"><span className="spinner spinner-dark" /></div></div>
-        </div>
-      </div>
+      <AppShell breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: '…' }]}>
+        <div className="page-loading"><span className="spinner spinner-dark" /></div>
+      </AppShell>
     );
   }
 
   if (!entity) {
     return (
-      <div className="app-layout">
-        <Sidebar />
-        <div className="main-content">
-          <Topbar breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: 'Not Found' }]} />
-          <div className="page-container">
-            <div className="empty-state" style={{ padding: 80 }}>
-              <span className="material-symbols-outlined empty-state-icon">search_off</span>
-              <h3>Entity not found</h3>
-              <p>The entity you're looking for doesn't exist or has been deleted.</p>
-              <Link to="/entities" className="btn btn-primary" style={{ marginTop: 8 }}>Back to Entities</Link>
-            </div>
-          </div>
+      <AppShell breadcrumbs={[{ label: 'Entities', to: '/entities' }, { label: 'Not Found' }]}>
+        <div className="empty-state" style={{ padding: 80 }}>
+          <span className="material-symbols-outlined empty-state-icon">search_off</span>
+          <h3>Entity not found</h3>
+          <p>The entity you're looking for doesn't exist or has been deleted.</p>
+          <Link to="/entities" className="btn btn-primary" style={{ marginTop: 8 }}>Back to Entities</Link>
         </div>
-      </div>
+      </AppShell>
     );
   }
 
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <div className="main-content">
-        <Topbar breadcrumbs={[
-          { label: 'Entities', to: '/entities' },
-          { label: entity.name },
-        ]} />
-
-        <div className="page-container fade-in">
+    <AppShell breadcrumbs={[
+      { label: 'Entities', to: '/entities' },
+      { label: entity.name },
+    ]}>
           {/* Header Card */}
           <div className="card entity-header-card">
             <div className="entity-header-left">
@@ -714,8 +698,6 @@ export default function EntityDetail() {
             {activeTab === 'users'    && <UsersTab entity={entity} />}
             {activeTab === 'danger'   && <DangerTab entity={entity} onSaved={setEntity} />}
           </div>
-        </div>
-      </div>
-    </div>
+    </AppShell>
   );
 }

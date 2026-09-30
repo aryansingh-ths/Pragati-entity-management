@@ -1,10 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-export default function Topbar({ title, breadcrumbs = [] }) {
+export default function Topbar({ title, breadcrumbs = [], onMenuToggle }) {
   return (
     <header className="topbar">
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Hamburger menu button — visible only on mobile */}
+        <button className="topbar-hamburger" onClick={onMenuToggle} aria-label="Toggle menu">
+          <span className="material-symbols-outlined">menu</span>
+        </button>
+
         {breadcrumbs.length > 0 ? (
           <div className="topbar-breadcrumb">
             {breadcrumbs.map((crumb, i) => (
