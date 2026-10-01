@@ -73,6 +73,8 @@ const tenantSchema = new mongoose.Schema(
     contact_email: { type: String, default: '' },
     contact_phone: { type: String, default: '' },
     address: { type: String, default: '' },
+    gst_no: { type: String, default: '' },
+    pan_number: { type: String, default: '' },
     status: { type: String, enum: ['active', 'suspended', 'trial'], default: 'active' },
   },
   { timestamps: true }
@@ -211,7 +213,7 @@ app.get('/api/super/entities', superAdminAuth, async (req, res) => {
 // POST /api/super/entities
 app.post('/api/super/entities', superAdminAuth, async (req, res) => {
   try {
-    const { name, owner_name, slug, subscribed_products, contact_email, contact_phone, address, status } =
+    const { name, owner_name, slug, subscribed_products, contact_email, contact_phone, address, gst_no, pan_number, status } =
       req.body;
 
     if (!name || !slug || !subscribed_products || subscribed_products.length === 0) {
@@ -237,6 +239,8 @@ app.post('/api/super/entities', superAdminAuth, async (req, res) => {
       contact_email: contact_email || '',
       contact_phone: contact_phone || '',
       address: address || '',
+      gst_no: gst_no || '',
+      pan_number: pan_number || '',
       status: status || 'active',
     });
     await tenant.save();
@@ -281,7 +285,7 @@ app.get('/api/super/entities/:id', superAdminAuth, async (req, res) => {
 // PUT /api/super/entities/:id
 app.put('/api/super/entities/:id', superAdminAuth, async (req, res) => {
   try {
-    const { name, owner_name, subscribed_products, contact_email, contact_phone, address, status } = req.body;
+    const { name, owner_name, subscribed_products, contact_email, contact_phone, address, gst_no, pan_number, status } = req.body;
 
     const update = {};
     if (name !== undefined) update.name = name;
@@ -290,6 +294,8 @@ app.put('/api/super/entities/:id', superAdminAuth, async (req, res) => {
     if (contact_email !== undefined) update.contact_email = contact_email;
     if (contact_phone !== undefined) update.contact_phone = contact_phone;
     if (address !== undefined) update.address = address;
+    if (gst_no !== undefined) update.gst_no = gst_no;
+    if (pan_number !== undefined) update.pan_number = pan_number;
     if (status !== undefined) update.status = status;
 
     const tenant = await Tenant.findByIdAndUpdate(req.params.id, update, { new: true });

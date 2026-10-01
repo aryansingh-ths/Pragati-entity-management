@@ -65,6 +65,8 @@ function OverviewTab({ entity, onSaved }) {
           contact_email: form.contact_email,
           contact_phone: form.contact_phone,
           address: form.address,
+          gst_no: form.gst_no,
+          pan_number: form.pan_number,
           status: form.status,
         }),
       });
@@ -137,9 +139,27 @@ function OverviewTab({ entity, onSaved }) {
           <label>Address</label>
           <textarea
             className="form-input"
-            value={form.address}
+            value={form.address || ''}
             onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
             rows={2}
+          />
+        </div>
+        <div className="detail-field">
+          <label>GST Number</label>
+          <input
+            className="form-input"
+            value={form.gst_no || ''}
+            onChange={e => setForm(f => ({ ...f, gst_no: e.target.value }))}
+            placeholder="e.g. 22AAAAA0000A1Z5"
+          />
+        </div>
+        <div className="detail-field">
+          <label>PAN Number</label>
+          <input
+            className="form-input"
+            value={form.pan_number || ''}
+            onChange={e => setForm(f => ({ ...f, pan_number: e.target.value }))}
+            placeholder="e.g. ABCDE1234F"
           />
         </div>
         <div className="detail-field">

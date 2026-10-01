@@ -28,6 +28,8 @@ export default function CreateEntityDrawer({ onClose, onSuccess }) {
     contact_email: '',
     contact_phone: '',
     address: '',
+    gst_no: '',
+    pan_number: '',
     status: 'active',
   });
   const [slugManual, setSlugManual] = useState(false);
@@ -223,6 +225,29 @@ export default function CreateEntityDrawer({ onClose, onSuccess }) {
               value={form.address}
               onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
               rows={2}
+            />
+          </div>
+
+          {/* Commercial Details */}
+          <div className="form-group">
+            <label className="form-label">GST Number</label>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="e.g. 22AAAAA0000A1Z5"
+              value={form.gst_no}
+              onChange={e => setForm(f => ({ ...f, gst_no: e.target.value }))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">PAN Number</label>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="e.g. ABCDE1234F"
+              value={form.pan_number}
+              onChange={e => setForm(f => ({ ...f, pan_number: e.target.value }))}
             />
           </div>
 
