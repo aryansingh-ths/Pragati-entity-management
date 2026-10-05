@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/products',  icon: 'inventory_2',    label: 'Products' },
   { to: '/billing',   icon: 'receipt_long',   label: 'Billing' },
   { to: '/audits',    icon: 'history',        label: 'Audit Logs' },
+  { to: '/settings',  icon: 'settings',       label: 'Settings' },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {

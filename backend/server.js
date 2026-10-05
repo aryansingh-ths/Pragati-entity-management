@@ -5,6 +5,17 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+  port: process.env.SMTP_PORT || 587,
+  auth: {
+    user: process.env.SMTP_USER || 'test@ethereal.email',
+    pass: process.env.SMTP_PASS || 'testpass'
+  }
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,12 +63,15 @@ async function firePortalWebhooks(tenant, event) {
 }
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 // ─── MongoDB Connection ───────────────────────────────────────────────────────
+// The control plane owns ONLY its own database. Other platforms (e.g. RMS, SMS) must
+// use their own database names on the same cluster so data stays isolated.
+const CONTROL_PLANE_DB = process.env.MONGODB_DB_NAME || 'pragati';
 mongoose
-  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/pragati')
-  .then(() => console.log('✅ MongoDB connected'))
+  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017', { dbName: CONTROL_PLANE_DB })
+  .then(() => console.log(`✅ MongoDB connected (db: ${CONTROL_PLANE_DB})`))
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // ─── Mongoose Models ──────────────────────────────────────────────────────────
@@ -76,6 +90,8 @@ const tenantSchema = new mongoose.Schema(
     gst_no: { type: String, default: '' },
     pan_number: { type: String, default: '' },
     status: { type: String, enum: ['active', 'suspended', 'trial'], default: 'active' },
+    billing_cycle: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
+    registered_via: { type: String, enum: ['admin', 'self_signup'], default: 'admin' },
   },
   { timestamps: true }
 );
@@ -89,6 +105,11 @@ const globalProductSchema = new mongoose.Schema(
     webhook_url: { type: String, default: '' },
     description: { type: String, default: '' },
     price: { type: Number, default: 0 },
+    // Marketing fields shown on the public landing page
+    tagline: { type: String, default: '' },
+    features: { type: [String], default: [] },
+    icon: { type: String, default: 'apps' }, // Material Symbols icon name
+    image: { type: String, default: '' }, // Optional product image URL shown on landing cards
   },
   { timestamps: true }
 );
@@ -126,6 +147,85 @@ async function logAudit(username, action, entityType, entityId, details = {}) {
   } catch (err) {
     console.error('Failed to write audit log:', err);
   }
+}
+
+// RegistrationOrder — one per self-service signup checkout.
+// Holds the details captured before payment; the Tenant + Admin user are only
+// created once the order is paid. Card/UPI details are NEVER persisted.
+const registrationOrderSchema = new mongoose.Schema(
+  {
+    order_id: { type: String, required: true, unique: true },
+    status: {
+      type: String,
+      enum: ['created', 'processing', 'paid', 'needs_review', 'expired'],
+      default: 'created',
+    },
+    company: {
+      name: String,
+      owner_name: String,
+      slug: String,
+      contact_email: String,
+      contact_phone: String,
+      address: String,
+      gst_no: String,
+      pan_number: String,
+    },
+    products: { type: [String], default: [] },
+    billing_cycle: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
+    amount: {
+      subtotal: Number,
+      taxes: { type: [{ name: String, amount: Number, rate: Number }], default: [] },
+      total: Number,
+      currency: { type: String, default: 'INR' },
+    },
+    attempts: { type: Number, default: 0 },
+    payment: {
+      method: String,
+      reference: String,
+      paid_at: Date,
+    },
+    expires_at: { type: Date, required: true },
+  },
+  { timestamps: true }
+);
+const RegistrationOrder = mongoose.model('RegistrationOrder', registrationOrderSchema);
+
+// Contact (for contact form submissions)
+const contactSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    category: { type: String, required: true },
+    message: { type: String, required: true },
+    status: { type: String, enum: ['new', 'read', 'resolved'], default: 'new' },
+  },
+  { timestamps: true }
+);
+const Contact = mongoose.model('Contact', contactSchema);
+
+function cleanFeatures(features) {
+  const list = Array.isArray(features)
+    ? features
+    : typeof features === 'string'
+      ? features.split('\n')
+      : [];
+  return list.map((f) => String(f).trim()).filter(Boolean).slice(0, 8);
+}
+
+// SystemConfig (for global settings like taxes and discounts)
+const systemConfigSchema = new mongoose.Schema({
+  taxes: {
+    type: [{ name: String, rate: Number }],
+    default: [{ name: 'GST', rate: 18 }]
+  },
+  yearly_months_charged: { type: Number, default: 10 }
+}, { timestamps: true });
+const SystemConfig = mongoose.model('SystemConfig', systemConfigSchema);
+
+async function getConfig() {
+  let config = await SystemConfig.findOne();
+  if (!config) config = await SystemConfig.create({});
+  return config;
 }
 
 // ─── SuperAdmin Middleware ────────────────────────────────────────────────────
@@ -397,7 +497,7 @@ app.get('/api/super/products', superAdminAuth, async (req, res) => {
 // POST /api/super/products
 app.post('/api/super/products', superAdminAuth, async (req, res) => {
   try {
-    const { name, slug, webhook_url, description, price } = req.body;
+    const { name, slug, webhook_url, description, price, tagline, features, icon, image } = req.body;
     if (!name || !slug) return res.status(400).json({ error: 'Name and slug are required' });
 
     if (!/^[a-zA-Z0-9-]+$/.test(slug)) {
@@ -407,7 +507,10 @@ app.post('/api/super/products', superAdminAuth, async (req, res) => {
     const existing = await GlobalProduct.findOne({ slug });
     if (existing) return res.status(409).json({ error: 'Slug already taken' });
 
-    const product = new GlobalProduct({ name, slug, webhook_url: webhook_url || '', description, price: price || 0 });
+    const product = new GlobalProduct({
+      name, slug, webhook_url: webhook_url || '', description, price: price || 0,
+      tagline: tagline || '', features: cleanFeatures(features), icon: icon || 'apps', image: (image || '').trim(),
+    });
     await product.save();
 
     await logAudit(req.superAdmin.username, 'CREATE', 'Product', product.slug, { name, price: product.price });
@@ -421,12 +524,16 @@ app.post('/api/super/products', superAdminAuth, async (req, res) => {
 // PUT /api/super/products/:id
 app.put('/api/super/products/:id', superAdminAuth, async (req, res) => {
   try {
-    const { name, description, price, webhook_url } = req.body;
+    const { name, description, price, webhook_url, tagline, features, icon, image } = req.body;
     const update = {};
     if (name !== undefined) update.name = name;
     if (description !== undefined) update.description = description;
     if (price !== undefined) update.price = price;
     if (webhook_url !== undefined) update.webhook_url = webhook_url;
+    if (tagline !== undefined) update.tagline = tagline;
+    if (features !== undefined) update.features = cleanFeatures(features);
+    if (icon !== undefined) update.icon = icon || 'apps';
+    if (image !== undefined) update.image = (image || '').trim();
 
     const product = await GlobalProduct.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -462,6 +569,38 @@ app.get('/api/super/audits', superAdminAuth, async (req, res) => {
     return res.json(audits);
   } catch (err) {
     return res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+// ─── Super Admin Config Routes ──────────────────────────────────────────────────
+
+// GET /api/super/config
+app.get('/api/super/config', superAdminAuth, async (req, res) => {
+  try {
+    const config = await getConfig();
+    return res.json(config);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to fetch config' });
+  }
+});
+
+// PUT /api/super/config
+app.put('/api/super/config', superAdminAuth, async (req, res) => {
+  try {
+    const { taxes, yearly_months_charged } = req.body;
+    let config = await getConfig();
+    
+    if (taxes !== undefined && Array.isArray(taxes)) {
+      config.taxes = taxes.map(t => ({ name: t.name, rate: parseFloat(t.rate) || 0 }));
+    }
+    if (yearly_months_charged !== undefined) config.yearly_months_charged = parseInt(yearly_months_charged, 10);
+    
+    await config.save();
+    await logAudit(req.superAdmin.username, 'UPDATE', 'Config', 'SystemConfig', { taxes, yearly_months_charged });
+    
+    return res.json(config);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to update config' });
   }
 });
 
@@ -723,6 +862,349 @@ app.delete('/api/admin/staff/:userId', async (req, res) => {
     return res.json({ success: true, deleted_user_id: user._id });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// ─── Public (Customer) Routes ─────────────────────────────────────────────────
+// Used by the landing page + self-registration flow. No authentication.
+
+// Tiny in-memory rate limiter (per IP + bucket) to blunt abuse of public endpoints.
+const rateBuckets = new Map();
+function rateLimit(bucket, max, windowMs) {
+  return (req, res, next) => {
+    const key = `${bucket}:${req.ip}`;
+    const now = Date.now();
+    const hits = (rateBuckets.get(key) || []).filter((t) => now - t < windowMs);
+    if (hits.length >= max) {
+      return res.status(429).json({ error: 'Too many requests. Please slow down and try again shortly.' });
+    }
+    hits.push(now);
+    rateBuckets.set(key, hits);
+    next();
+  };
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, hits] of rateBuckets) {
+    if (!hits.some((t) => now - t < 10 * 60 * 1000)) rateBuckets.delete(k);
+  }
+}, 5 * 60 * 1000).unref();
+
+const RESERVED_SLUGS = ['admin', 'api', 'login', 'register', 'super', 'pragati', 'techhansa', 'www', 'app', 'support'];
+const round2 = (n) => Math.round(n * 100) / 100;
+
+function computeAmount(products, billing_cycle, config) {
+  const monthly = products.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
+  const subtotal = round2(billing_cycle === 'yearly' ? monthly * config.yearly_months_charged : monthly);
+  
+  let totalTaxes = 0;
+  const taxesList = config.taxes || [{ name: 'GST', rate: 18 }];
+  const computedTaxes = taxesList.map(t => {
+    const amt = round2(subtotal * (t.rate / 100));
+    totalTaxes += amt;
+    return { name: t.name, amount: amt, rate: t.rate };
+  });
+
+  return { subtotal, taxes: computedTaxes, total: round2(subtotal + totalTaxes), currency: 'INR' };
+}
+
+function generatePassword() {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const symbols = '@#$%&*!';
+  const pick = (set) => set[crypto.randomInt(set.length)];
+  const all = upper + lower + digits + symbols;
+  const chars = [pick(upper), pick(lower), pick(digits), pick(symbols)];
+  while (chars.length < 12) chars.push(pick(all));
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
+}
+
+function luhnValid(num) {
+  let sum = 0;
+  let alt = false;
+  for (let i = num.length - 1; i >= 0; i--) {
+    let d = Number(num[i]);
+    if (alt) { d *= 2; if (d > 9) d -= 9; }
+    sum += d;
+    alt = !alt;
+  }
+  return sum % 10 === 0;
+}
+
+const BANKS = ['hdfc', 'sbi', 'icici', 'axis', 'kotak', 'pnb'];
+
+// Simulated payment gateway. Swap this function for a Razorpay/Stripe verification
+// (create order → verify signature) when real keys are available.
+// Test values: card 4000 0000 0000 0002 → declined; UPI id "fail@upi" → declined.
+function simulateGateway(method, details = {}) {
+  if (method === 'card') {
+    const number = String(details.number || '').replace(/\s+/g, '');
+    if (!/^\d{13,19}$/.test(number) || !luhnValid(number)) return { ok: false, error: 'Invalid card number.' };
+    const m = /^(\d{2})\s*\/\s*(\d{2})$/.exec(String(details.expiry || ''));
+    if (!m || Number(m[1]) < 1 || Number(m[1]) > 12) return { ok: false, error: 'Invalid card expiry.' };
+    const expiresAt = new Date(2000 + Number(m[2]), Number(m[1]), 1); // first day after expiry month
+    if (expiresAt <= new Date()) return { ok: false, error: 'This card has expired.' };
+    if (!/^\d{3,4}$/.test(String(details.cvv || ''))) return { ok: false, error: 'Invalid CVV.' };
+    if (!String(details.holder || '').trim()) return { ok: false, error: 'Cardholder name is required.' };
+    if (number === '4000000000000002') return { ok: false, error: 'Your card was declined by the bank. Please try another payment method.' };
+    return { ok: true };
+  }
+  if (method === 'upi') {
+    const vpa = String(details.vpa || '').trim();
+    if (!/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(vpa)) return { ok: false, error: 'Enter a valid UPI ID (e.g. name@bank).' };
+    if (vpa.toLowerCase() === 'fail@upi') return { ok: false, error: 'UPI payment was declined. Please try again.' };
+    return { ok: true };
+  }
+  if (method === 'netbanking') {
+    if (!BANKS.includes(String(details.bank || '').toLowerCase())) return { ok: false, error: 'Please select a bank.' };
+    return { ok: true };
+  }
+  return { ok: false, error: 'Unsupported payment method.' };
+}
+
+// POST /api/public/contact — receive contact form submissions
+app.post('/api/public/contact', rateLimit('contact', 10, 60 * 1000), async (req, res) => {
+  try {
+    const { name, email, category, message } = req.body || {};
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Name, email, and message are required' });
+    }
+    const contact = new Contact({ name, email, category: category || 'General', message });
+    await contact.save();
+    return res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('[contact form]', err);
+    return res.status(500).json({ error: 'Failed to submit contact form. Please try again.' });
+  }
+});
+
+// GET /api/public/products — catalog shown on the landing page (admin-managed)
+app.get('/api/public/products', async (req, res) => {
+  try {
+    const products = await GlobalProduct.find()
+      .sort({ createdAt: 1 })
+      .select('name slug description price tagline features icon image')
+      .lean();
+    res.set('Cache-Control', 'no-store');
+    return res.json(products);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// GET /api/public/config — public access to global settings like tax rate
+app.get('/api/public/config', async (req, res) => {
+  try {
+    const config = await getConfig();
+    res.set('Cache-Control', 'no-store');
+    return res.json({ taxes: config.taxes, yearly_months_charged: config.yearly_months_charged });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to fetch config' });
+  }
+});
+
+// GET /api/public/slug-available?slug=acme-corp
+app.get('/api/public/slug-available', rateLimit('slug', 60, 60 * 1000), async (req, res) => {
+  try {
+    const slug = String(req.query.slug || '').toLowerCase();
+    if (!/^[a-z0-9-]{3,40}$/.test(slug) || RESERVED_SLUGS.includes(slug)) {
+      return res.json({ available: false, reason: 'invalid' });
+    }
+    const taken = await Tenant.exists({ slug });
+    return res.json({ available: !taken, reason: taken ? 'taken' : null });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to check availability' });
+  }
+});
+
+// POST /api/public/register/order — validate details and create a checkout order
+app.post('/api/public/register/order', rateLimit('order', 15, 10 * 60 * 1000), async (req, res) => {
+  try {
+    const b = req.body || {};
+    const str = (v) => String(v ?? '').trim();
+    const company = {
+      name: str(b.name),
+      owner_name: str(b.owner_name),
+      slug: str(b.slug).toLowerCase(),
+      contact_email: str(b.contact_email).toLowerCase(),
+      contact_phone: str(b.contact_phone).replace(/[\s-]/g, ''),
+      address: str(b.address),
+      gst_no: str(b.gst_no).toUpperCase(),
+      pan_number: str(b.pan_number).toUpperCase(),
+    };
+    const billing_cycle = b.billing_cycle === 'yearly' ? 'yearly' : 'monthly';
+    const requested = Array.isArray(b.products) ? [...new Set(b.products.map(String))] : [];
+
+    if (company.name.length < 2) return res.status(400).json({ error: 'Business name is required.' });
+    if (company.owner_name.length < 2) return res.status(400).json({ error: 'Owner name is required.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(company.contact_email)) return res.status(400).json({ error: 'Enter a valid email address.' });
+    if (!/^\+?\d{10,13}$/.test(company.contact_phone)) return res.status(400).json({ error: 'Enter a valid phone number.' });
+    if (company.gst_no && !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/.test(company.gst_no)) return res.status(400).json({ error: 'Enter a valid 15-character GSTIN or leave it blank.' });
+    if (company.pan_number && !/^[A-Z]{5}\d{4}[A-Z]$/.test(company.pan_number)) return res.status(400).json({ error: 'Enter a valid 10-character PAN or leave it blank.' });
+    if (!/^[a-z0-9-]{3,40}$/.test(company.slug) || RESERVED_SLUGS.includes(company.slug)) {
+      return res.status(400).json({ error: 'Workspace ID must be 3–40 characters: lowercase letters, numbers and hyphens.' });
+    }
+    if (requested.length === 0) return res.status(400).json({ error: 'Select at least one product.' });
+
+    if (await Tenant.exists({ slug: company.slug })) {
+      return res.status(409).json({ error: 'That workspace ID is already taken. Please choose another.' });
+    }
+
+    const productDocs = await GlobalProduct.find({ slug: { $in: requested } }).lean();
+    if (productDocs.length !== requested.length) {
+      return res.status(400).json({ error: 'One or more selected products are no longer available.' });
+    }
+
+    const config = await getConfig();
+    const amount = computeAmount(productDocs, billing_cycle, config);
+    const order = await RegistrationOrder.create({
+      order_id: 'ord_' + crypto.randomBytes(9).toString('hex'),
+      company,
+      products: productDocs.map((p) => p.slug),
+      billing_cycle,
+      amount,
+      expires_at: new Date(Date.now() + 30 * 60 * 1000),
+    });
+
+    return res.status(201).json({
+      order_id: order.order_id,
+      amount,
+      billing_cycle,
+      products: productDocs.map((p) => ({ slug: p.slug, name: p.name, price: p.price })),
+      expires_at: order.expires_at,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Could not start checkout. Please try again.' });
+  }
+});
+
+// POST /api/public/register/pay — process payment, then provision tenant + credentials
+app.post('/api/public/register/pay', rateLimit('pay', 20, 10 * 60 * 1000), async (req, res) => {
+  const { order_id, method, details } = req.body || {};
+  if (!order_id) return res.status(400).json({ error: 'order_id is required' });
+
+  // Atomically claim the order so double-clicks / replays can never fulfil it twice.
+  const order = await RegistrationOrder.findOneAndUpdate(
+    { order_id: String(order_id), status: 'created', expires_at: { $gt: new Date() } },
+    { status: 'processing', $inc: { attempts: 1 } },
+    { new: true }
+  );
+  if (!order) {
+    const existing = await RegistrationOrder.findOne({ order_id: String(order_id) }).lean();
+    if (!existing) return res.status(404).json({ error: 'Order not found.' });
+    if (existing.status === 'paid') return res.status(409).json({ error: 'This order has already been completed.' });
+    if (existing.status === 'processing') return res.status(409).json({ error: 'Payment is already being processed.' });
+    return res.status(410).json({ error: 'This checkout session has expired. Please start again.' });
+  }
+
+  const release = (status = 'created') => RegistrationOrder.updateOne({ _id: order._id }, { status });
+  let charged = false;
+
+  try {
+    if (order.attempts > 5) {
+      await release('expired');
+      return res.status(429).json({ error: 'Too many failed payment attempts. Please start a new checkout.' });
+    }
+
+    // Slug may have been taken since the order was created
+    if (await Tenant.exists({ slug: order.company.slug })) {
+      await release('expired');
+      return res.status(409).json({ error: 'That workspace ID was just taken. Please restart and pick another.', code: 'SLUG_TAKEN' });
+    }
+
+    let reference;
+    if (order.amount.total > 0) {
+      const gateway = simulateGateway(method, details);
+      await new Promise((r) => setTimeout(r, 1500)); // simulate bank round-trip
+      if (!gateway.ok) {
+        await release('created');
+        return res.status(402).json({ error: gateway.error, code: 'PAYMENT_FAILED' });
+      }
+      reference = 'PAY-' + crypto.randomBytes(5).toString('hex').toUpperCase();
+      charged = true;
+    } else {
+      reference = 'FREE-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+    }
+
+    // ── Payment succeeded → provision the tenant and its Admin user ──
+    const entity_id = 'ent_' + order.company.slug.replace(/-/g, '_') + '_' + Date.now();
+    const username = order.company.slug + '_admin';
+    const password = generatePassword();
+
+    const tenant = await Tenant.create({
+      slug: order.company.slug,
+      entity_id,
+      name: order.company.name,
+      owner_name: order.company.owner_name,
+      subscribed_products: order.products,
+      contact_email: order.company.contact_email,
+      contact_phone: order.company.contact_phone,
+      address: order.company.address,
+      gst_no: order.company.gst_no,
+      pan_number: order.company.pan_number,
+      status: 'active',
+      billing_cycle: order.billing_cycle,
+      registered_via: 'self_signup',
+    });
+    await User.create({ entity_id, username, password_hash: await bcrypt.hash(password, 10), role: 'Admin' });
+
+    await RegistrationOrder.updateOne(
+      { _id: order._id },
+      { status: 'paid', payment: { method: method || 'free', reference, paid_at: new Date() } }
+    );
+    await logAudit('customer:self-signup', 'CREATE', 'Tenant', tenant.slug, {
+      name: tenant.name, subscribed_products: order.products, billing_cycle: order.billing_cycle,
+      order_id: order.order_id, amount: order.amount.total, payment_reference: reference,
+    });
+
+    try {
+      await transporter.sendMail({
+        from: '"Pragati Support" <onboarding@resend.dev>',
+        to: tenant.contact_email,
+        subject: 'Welcome to Pragati - Payment Receipt & Credentials',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+            <h2>Welcome to Pragati, ${tenant.name}!</h2>
+            <p>Your payment of <strong>${order.amount.total} ${order.amount.currency}</strong> has been successfully processed.</p>
+            <ul>
+              <li><strong>Order ID:</strong> ${order.order_id}</li>
+              <li><strong>Payment Reference:</strong> ${reference}</li>
+              <li><strong>Billing Cycle:</strong> ${order.billing_cycle}</li>
+            </ul>
+            <hr style="border: 1px solid #eee; margin: 24px 0;" />
+            <h3>Your Login Credentials</h3>
+            <p>Use the following credentials to log in to your admin portal:</p>
+            <div style="background: #f5f5f5; padding: 16px; border-radius: 8px;">
+              <p style="margin: 0 0 8px 0;"><strong>Username:</strong> ${username}</p>
+              <p style="margin: 0;"><strong>Password:</strong> ${password}</p>
+            </div>
+            <p><em>Please ensure you log in and change your password as soon as possible for security purposes.</em></p>
+            <br/>
+            <p>Thanks,<br/><strong>Techhansa Team</strong></p>
+          </div>
+        `
+      });
+      console.log(`[Email] Receipt and credentials sent to ${tenant.contact_email}`);
+    } catch (emailErr) {
+      console.error('[Email Error] Failed to send email to', tenant.contact_email, emailErr.message);
+    }
+
+    return res.status(201).json({
+      tenant: { name: tenant.name, slug: tenant.slug, subscribed_products: tenant.subscribed_products },
+      credentials: { username, password },
+      payment: { reference, method: method || 'free', amount: order.amount, billing_cycle: order.billing_cycle },
+    });
+  } catch (err) {
+    console.error('[register/pay]', err);
+    // Payment may have been captured but provisioning failed — flag for manual review, never lose it silently.
+    await release(charged ? 'needs_review' : 'created').catch(() => {});
+    return res.status(500).json({ error: 'Something went wrong while setting up your account. If you were charged, contact support with order ' + order.order_id + '.' });
   }
 });
 
