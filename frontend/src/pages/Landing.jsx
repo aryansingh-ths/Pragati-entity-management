@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuroraBackground, BrandLogo, CountUp, Reveal, accentFor, inr, useProducts } from '../customer/shared.jsx';
+import { AuroraBackground, TechBackground, BrandLogo, CountUp, Reveal, accentFor, inr, useProducts } from '../customer/shared.jsx';
 
 export const NAV_LINKS = [
   { id: 'products', label: 'Products' },
@@ -10,7 +10,7 @@ export const NAV_LINKS = [
 
 const STEPS = [
   { icon: 'grid_view', title: 'Pick your products', text: 'Browse the Pragati suite and choose the tools that fit your business.' },
-  { icon: 'badge', title: 'Tell us about you', text: 'Share your business details and pick a workspace name — it takes a minute.' },
+  { icon: 'badge', title: 'Tell us about you', text: 'Share your business details and pick a workspace name â€” it takes a minute.' },
   { icon: 'lock', title: 'Pay securely', text: 'Pay by card, UPI or net banking with a transparent, GST-inclusive summary.' },
   { icon: 'key', title: 'Get your login', text: 'Receive your credentials instantly and start using your products right away.' },
 ];
@@ -19,7 +19,7 @@ const BENEFITS = [
   { icon: 'bolt', title: 'Live in minutes', text: 'No sales calls or paperwork. Register, pay and your workspace is provisioned automatically.' },
   { icon: 'verified_user', title: 'Secure by design', text: 'Encrypted credentials, isolated workspaces and safe payment handling you can trust.' },
   { icon: 'receipt_long', title: 'GST-ready billing', text: 'Clear pricing with GST breakdown, monthly or yearly plans, and savings on annual billing.' },
-  { icon: 'hub', title: 'One account, many tools', text: 'Add more Pragati products as you grow — all under the same single sign-on identity.' },
+  { icon: 'hub', title: 'One account, many tools', text: 'Add more Pragati products as you grow â€” all under the same single sign-on identity.' },
 ];
 
 export function scrollToId(id) {
@@ -86,7 +86,7 @@ function Hero({ products, loading }) {
       <div className="lp-container lp-hero-grid">
         <div className="lp-hero-copy">
           <span className="lp-pill lp-fade-up" style={{ animationDelay: '60ms' }}>
-            <span className="lp-pill-dot" /> Self-service onboarding · No waiting
+            <span className="lp-pill-dot" /> Self-service onboarding{" \u00b7 "}No waiting
           </span>
           <h1 className="lp-h1 lp-fade-up" style={{ animationDelay: '140ms' }}>
             One platform for <span className="lp-gradient-text">every tool</span> your business runs on
@@ -372,7 +372,7 @@ export function Footer() {
       <div className="lp-container lp-footer-inner">
         <div className="lp-footer-brand">
           <BrandLogo size={64} textSize="38px" />
-          <p>Pragati by Techhansa — a connected suite of business products, onboarded in minutes.</p>
+          <p>Pragati by Techhansa{" \u2014 "}a connected suite of business products, onboarded in minutes.</p>
           <div className="lp-footer-chips">
             <span><i className="material-symbols-outlined">bolt</i>Instant setup</span>
             <span><i className="material-symbols-outlined">lock</i>Secure payments</span>
@@ -402,8 +402,8 @@ export function Footer() {
         </div>
       </div>
       <div className="lp-container lp-footer-bottom">
-        <span>© {new Date().getFullYear()} Techhansa. All rights reserved.</span>
-        <span>Made with <span className="lp-heart">♥</span> in India</span>
+        <span>{"\u00a9 "}{new Date().getFullYear()} Techhansa. All rights reserved.</span>
+        <span>Made with <span className="lp-heart">{"\u2665"}</span> in India</span>
         <button className="lp-totop" aria-label="Back to top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <span className="material-symbols-outlined">keyboard_arrow_up</span>
         </button>
@@ -416,13 +416,14 @@ export default function Landing() {
   const { products, loading, error, reload } = useProducts();
 
   useEffect(() => {
-    document.title = 'Pragati — Business products, onboarded in minutes';
+    document.title = 'Pragati \u2014 Business products, onboarded in minutes';
     return () => { document.title = 'Pragati Control Plane'; };
   }, []);
 
   return (
     <div className="lp-root">
       <AuroraBackground />
+      <TechBackground />
       <Navbar />
       <main>
         <Hero products={products} loading={loading} />
@@ -436,3 +437,4 @@ export default function Landing() {
     </div>
   );
 }
+

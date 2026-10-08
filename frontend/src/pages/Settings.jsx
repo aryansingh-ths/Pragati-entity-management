@@ -5,7 +5,7 @@ import { apiFetch } from '../api/client.js';
 
 export default function Settings() {
   const { auth } = useAuth();
-  const [config, setConfig] = useState({ taxes: [{ name: 'GST', rate: 18 }], yearly_months_charged: 10 });
+  const [config, setConfig] = useState({ taxes: [{ name: 'GST', rate: 18 }], yearly_months_charged: 10, upi_id: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -40,7 +40,8 @@ export default function Settings() {
         method: 'PUT',
         body: JSON.stringify({
           taxes: config.taxes,
-          yearly_months_charged: parseInt(config.yearly_months_charged, 10)
+          yearly_months_charged: parseInt(config.yearly_months_charged, 10),
+            upi_id: config.upi_id
         })
       });
       if (res.ok) {
@@ -162,3 +163,4 @@ export default function Settings() {
     </AppShell>
   );
 }
+

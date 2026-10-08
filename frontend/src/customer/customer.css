@@ -3130,3 +3130,246 @@
     transform: none !important;
   }
 }
+
+/* -- Tech background (landing) --------------------------------------------- */
+.lp-tech {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Hexagon float animations */
+@keyframes lp-hex-a {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.9;
+  }
+
+  33% {
+    transform: translateY(-22px) rotate(12deg) scale(1.08);
+    opacity: 1;
+  }
+
+  66% {
+    transform: translateY(10px) rotate(-8deg) scale(0.96);
+    opacity: 0.75;
+  }
+}
+
+@keyframes lp-hex-b {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.85;
+  }
+
+  40% {
+    transform: translateY(18px) rotate(-15deg) scale(1.1);
+    opacity: 1;
+  }
+
+  70% {
+    transform: translateY(-12px) rotate(10deg) scale(0.94);
+    opacity: 0.7;
+  }
+}
+
+.lp-tech-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.lp-tech-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(14, 165, 198, 0.3);
+}
+
+.lp-tech-ring-1 {
+  width: 520px;
+  height: 520px;
+  top: 8%;
+  right: -160px;
+  animation: lp-spin 40s linear infinite;
+}
+
+.lp-tech-ring-2 {
+  width: 340px;
+  height: 340px;
+  bottom: 6%;
+  left: -110px;
+  border-color: rgba(139, 124, 246, 0.35);
+  animation: lp-spin 55s linear infinite reverse;
+}
+
+@keyframes lp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lp-tech-code {
+  position: absolute;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 12px;
+  color: rgba(14, 165, 198, 0.5);
+  white-space: nowrap;
+  animation: lp-code-float 12s ease-in-out infinite;
+}
+
+.lp-tech-code-1 {
+  top: 22%;
+  left: 3%;
+}
+
+.lp-tech-code-2 {
+  top: 62%;
+  right: 4%;
+  animation-delay: -4s;
+  color: rgba(139, 124, 246, 0.55);
+}
+
+.lp-tech-code-3 {
+  bottom: 12%;
+  left: 8%;
+  animation-delay: -8s;
+}
+
+@keyframes lp-code-float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+
+  50% {
+    transform: translateY(-18px);
+    opacity: 0.85;
+  }
+}
+
+@media (max-width: 760px) {
+  .lp-tech-code {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .lp-tech-ring,
+  .lp-tech-code {
+    animation: none;
+  }
+}
+/* --- DARK TECH THEME (Slate & Teal) --- */
+.lp-root.lp-dark {
+  --lp-bg: #050b14;
+  --lp-bg-2: #08111f;
+  --lp-card: #0d1726;
+  --lp-ink: #f0fdfa;
+  --lp-ink-2: #94a3b8;
+  --lp-ink-3: #64748b;
+  --lp-line: rgba(56, 189, 248, 0.15);
+  --lp-brand: #2dd4bf;
+  --lp-brand-2: #38bdf8;
+  --lp-brand-soft: rgba(45, 212, 191, 0.15);
+  --lp-grad: linear-gradient(135deg, #2dd4bf 0%, #38bdf8 50%, #818cf8 100%);
+  --lp-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --lp-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --lp-shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.6);
+  color: var(--lp-ink);
+  background: var(--lp-bg);
+}
+
+/* Background elements tuning for dark mode */
+.lp-dark .lp-tech-glow {
+  background:
+    radial-gradient(1200px 800px at 45% 45%, rgba(45, 212, 191, 0.12), transparent 60%),
+    radial-gradient(900px 700px at 80% 20%, rgba(129, 140, 248, 0.1), transparent 50%),
+    radial-gradient(1000px 800px at 20% 80%, rgba(56, 189, 248, 0.12), transparent 60%);
+}
+
+.lp-dark .lp-tech-matrix {
+  position: absolute;
+  inset: -100%;
+  background-image: radial-gradient(rgba(45, 212, 191, 0.25) 2px, transparent 2px);
+  background-size: 32px 32px;
+  transform: rotateX(60deg) rotateZ(-45deg);
+  animation: lp-matrix-pan 40s linear infinite;
+  mask-image: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,1) 5%, rgba(0,0,0,0) 65%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,1) 5%, rgba(0,0,0,0) 65%);
+}
+@keyframes lp-matrix-pan {
+  0% { transform: rotateX(60deg) rotateZ(-45deg) translateY(0) translateX(0); }
+  100% { transform: rotateX(60deg) rotateZ(-45deg) translateY(-256px) translateX(256px); }
+}
+
+.lp-dark .lp-tech-ring { border-color: rgba(45, 212, 191, 0.15); }
+.lp-dark .lp-tech-ring-2 { border-color: rgba(129, 140, 248, 0.2); }
+.lp-dark .lp-tech-code { color: rgba(56, 189, 248, 0.3); }
+
+/* Typography */
+.lp-dark h1, .lp-dark h2, .lp-dark h3 { color: #f8fafc; }
+.lp-dark p, .lp-dark .lp-lead, .lp-dark .lp-sub { color: #cbd5e1; }
+.lp-dark .lp-eyebrow { color: #2dd4bf; }
+
+/* Buttons */
+.lp-dark .lp-btn-ghost { color: #f8fafc; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+.lp-dark .lp-btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: #2dd4bf; }
+.lp-dark .lp-btn-soft { color: #0f172a; background: var(--c, var(--lp-brand)); border: 1px solid transparent; }
+.lp-dark .lp-btn-soft:hover:not(:disabled) { opacity: 0.9; }
+.lp-dark .lp-btn-outline { background: transparent; color: #cbd5e1; border-color: rgba(56, 189, 248, 0.3); }
+.lp-dark .lp-btn-outline:hover { color: #2dd4bf; border-color: #2dd4bf; background: rgba(45, 212, 191, 0.1); }
+
+/* Navbar */
+.lp-dark .lp-nav { color: #f8fafc; }
+.lp-dark .lp-nav-link { color: #cbd5e1; }
+.lp-dark .lp-nav-link:hover { color: #2dd4bf; }
+.lp-dark .lp-brand-text { color: #f8fafc; }
+.lp-dark .lp-nav-scrolled { background: rgba(8, 17, 31, 0.85); backdrop-filter: blur(16px); box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 0 rgba(56, 189, 248, 0.15); }
+
+/* Pill */
+.lp-dark .lp-pill { background: rgba(13, 23, 38, 0.9); border: 1px solid rgba(45, 212, 191, 0.3); color: #cbd5e1; box-shadow: 0 0 16px rgba(45, 212, 191, 0.1); }
+
+/* Hero Mock */
+.lp-dark .lp-mock { background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(56, 189, 248, 0.2); box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 24px 64px rgba(0,0,0,0.6); }
+.lp-dark .lp-mock-top { background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(56, 189, 248, 0.15); }
+.lp-dark .lp-mock-title { color: #f8fafc; }
+.lp-dark .lp-mock-bar i { background: linear-gradient(90deg, #2dd4bf, #38bdf8); }
+.lp-dark .lp-mock-badge { background: rgba(45, 212, 191, 0.15); color: #2dd4bf; border: 1px solid rgba(45, 212, 191, 0.3); }
+
+/* Float Chips */
+.lp-dark .lp-float-chip { background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(56, 189, 248, 0.2); color: #f8fafc; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+.lp-dark .lp-float-chip small { color: #94a3b8; }
+
+/* Stats & Cards */
+.lp-dark .lp-stat, .lp-dark .lp-pcard, .lp-dark .lp-step, .lp-dark .lp-benefit { background: rgba(13, 23, 38, 0.85); border: 1px solid rgba(56, 189, 248, 0.15); backdrop-filter: blur(12px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.lp-dark .lp-stat:hover, .lp-dark .lp-pcard:hover, .lp-dark .lp-step:hover, .lp-dark .lp-benefit:hover { border-color: rgba(45, 212, 191, 0.5); box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(45, 212, 191, 0.2); }
+.lp-dark .lp-stat b, .lp-dark .lp-pcard h3, .lp-dark .lp-step h3, .lp-dark .lp-benefit h3, .lp-dark .lp-price b { color: #f8fafc; }
+.lp-dark .lp-stat span, .lp-dark .lp-pcard-desc, .lp-dark .lp-step p, .lp-dark .lp-benefit p, .lp-dark .lp-price small { color: #94a3b8; }
+.lp-dark .lp-pcard-features li { color: #cbd5e1; }
+
+.lp-dark .lp-stat-icon, .lp-dark .lp-step-icon, .lp-dark .lp-benefit-icon { background: rgba(45, 212, 191, 0.1); color: #2dd4bf; }
+.lp-dark .lp-stat-icon .material-symbols-outlined, .lp-dark .lp-pcard-features .material-symbols-outlined, .lp-dark .lp-step-icon .material-symbols-outlined, .lp-dark .lp-benefit-icon .material-symbols-outlined { color: #2dd4bf; }
+.lp-dark .lp-step-num { color: #2dd4bf; border-color: rgba(45, 212, 191, 0.3); }
+
+/* Steps Tint */
+.lp-dark .lp-section-tint { background: rgba(8, 17, 31, 0.6); }
+
+/* CTA */
+.lp-dark .lp-cta { background: rgba(13, 23, 38, 0.95); border: 1px solid rgba(45, 212, 191, 0.3); box-shadow: 0 0 64px rgba(45, 212, 191, 0.1); }
+.lp-dark .lp-cta h2 { color: #f8fafc; }
+.lp-dark .lp-cta p { color: #cbd5e1; }
+
+/* Footer */
+.lp-dark .lp-footer { background: #050b14; border-top: 1px solid rgba(56, 189, 248, 0.15); }
+.lp-dark .lp-footer-bottom { border-top-color: rgba(255,255,255,0.05); color: #64748b; }
+.lp-dark .lp-footer-brand p, .lp-dark .lp-footer-links a, .lp-dark .lp-footer-links button { color: #94a3b8; }
+.lp-dark .lp-footer-links a:hover, .lp-dark .lp-footer-links button:hover { color: #2dd4bf; }
+.lp-dark .lp-admin-card { background: rgba(13, 23, 38, 0.8); border: 1px solid rgba(56, 189, 248, 0.2); color: #cbd5e1; }

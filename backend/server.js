@@ -218,7 +218,8 @@ const systemConfigSchema = new mongoose.Schema({
     type: [{ name: String, rate: Number }],
     default: [{ name: 'GST', rate: 18 }]
   },
-  yearly_months_charged: { type: Number, default: 10 }
+  yearly_months_charged: { type: Number, default: 10 },
+    upi_id: { type: String, default: '' }
 }, { timestamps: true });
 const SystemConfig = mongoose.model('SystemConfig', systemConfigSchema);
 
@@ -587,13 +588,14 @@ app.get('/api/super/config', superAdminAuth, async (req, res) => {
 // PUT /api/super/config
 app.put('/api/super/config', superAdminAuth, async (req, res) => {
   try {
-    const { taxes, yearly_months_charged } = req.body;
+    const { taxes, yearly_months_charged, upi_id } = req.body;
     let config = await getConfig();
     
     if (taxes !== undefined && Array.isArray(taxes)) {
       config.taxes = taxes.map(t => ({ name: t.name, rate: parseFloat(t.rate) || 0 }));
     }
     if (yearly_months_charged !== undefined) config.yearly_months_charged = parseInt(yearly_months_charged, 10);
+      if (upi_id !== undefined) config.upi_id = upi_id;
     
     await config.save();
     await logAudit(req.superAdmin.username, 'UPDATE', 'Config', 'SystemConfig', { taxes, yearly_months_charged });
@@ -1221,3 +1223,4 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Pragati Control Plane running on http://localhost:${PORT}`);
 });
+

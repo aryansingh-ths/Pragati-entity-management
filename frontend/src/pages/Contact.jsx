@@ -143,8 +143,8 @@ export default function Contact() {
                     <p style={{ color: 'var(--lp-ink-2)', marginBottom: '12px', lineHeight: '1.5' }}>
                       Speak directly with our onboarding specialists or technical support team.
                     </p>
-                    <a href="tel:+919876543210" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: '600', color: 'var(--lp-brand)', transition: 'opacity 0.2s' }}>
-                      +91 98765 43210
+                    <a href="tel:+919711888951" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: '600', color: 'var(--lp-brand)', transition: 'opacity 0.2s' }}>
+                      +91 9711888951
                     </a>
                   </div>
                 </div>
@@ -160,8 +160,8 @@ export default function Contact() {
                     <p style={{ color: 'var(--lp-ink-2)', marginBottom: '12px', lineHeight: '1.5' }}>
                       Prefer writing? Drop us an email and we'll reply within 24 hours.
                     </p>
-                    <a href="mailto:support@techhansa.com" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', color: '#8b7cf6', transition: 'opacity 0.2s' }}>
-                      support@techhansa.com
+                    <a href="mailto:sales@techhansa.com" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', color: '#8b7cf6', transition: 'opacity 0.2s' }}>
+                      sales@techhansa.com
                     </a>
                   </div>
                 </div>
@@ -175,9 +175,8 @@ export default function Contact() {
                   <div>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px', color: 'var(--lp-ink)' }}>Visit us</h3>
                     <p style={{ color: 'var(--lp-ink-2)', lineHeight: '1.5' }}>
-                      Techhansa HQ<br />
-                      123 Innovation Drive, Sector 4<br />
-                      Bengaluru, Karnataka 560100
+                      A3-401, The Plaza at 106<br />
+                      Sector 106, Gurgaon, Haryana 122006
                     </p>
                   </div>
                 </div>
@@ -191,3 +190,5 @@ export default function Contact() {
     </div>
   );
 }
+
+

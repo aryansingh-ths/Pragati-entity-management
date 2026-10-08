@@ -291,10 +291,6 @@ function ProductsTab({ entity, onSaved }) {
 function UsersTab({ entity }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'Admin' });
-  const [adding, setAdding] = useState(false);
-  const [addError, setAddError] = useState('');
 
   async function fetchUsers() {
     setLoading(true);
@@ -310,30 +306,6 @@ function UsersTab({ entity }) {
 
   useEffect(() => { fetchUsers(); }, [entity.slug]);
 
-  async function handleAddUser(e) {
-    e.preventDefault();
-    if (!newUser.username || !newUser.password) {
-      setAddError('Username and password are required');
-      return;
-    }
-    setAdding(true);
-    setAddError('');
-    try {
-      const res = await apiFetch('/api/admin/staff', {
-        method: 'POST',
-        headers: { 'X-Tenant-Slug': entity.slug },
-        body: JSON.stringify(newUser),
-      });
-      const data = await res.json();
-      if (!res.ok) { setAddError(data.error || 'Failed to add user'); return; }
-      setShowAddForm(false);
-      setNewUser({ username: '', password: '', role: 'Admin' });
-      fetchUsers();
-    } finally {
-      setAdding(false);
-    }
-  }
-
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -343,55 +315,7 @@ function UsersTab({ entity }) {
             {users.length} user{users.length !== 1 ? 's' : ''} for this entity
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowAddForm(s => !s)}>
-          <span className="material-symbols-outlined">person_add</span>
-          Add User
-        </button>
       </div>
-
-      {showAddForm && (
-        <div className="add-user-form">
-          <div className="form-group">
-            <label className="form-label">Username <span className="required">*</span></label>
-            <input
-              className="form-input form-input-mono"
-              placeholder="username"
-              value={newUser.username}
-              onChange={e => setNewUser(u => ({ ...u, username: e.target.value }))}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Password <span className="required">*</span></label>
-            <input
-              className="form-input"
-              type="password"
-              placeholder="••••••••"
-              value={newUser.password}
-              onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Role</label>
-            <select
-              className="form-input form-select"
-              value={newUser.role}
-              onChange={e => setNewUser(u => ({ ...u, role: e.target.value }))}
-            >
-              <option value="Admin">Admin</option>
-              <option value="Host">Host</option>
-              <option value="Kitchen">Kitchen</option>
-            </select>
-          </div>
-          <button className="btn btn-primary" onClick={handleAddUser} disabled={adding} style={{ height: 42, alignSelf: 'flex-end' }}>
-            {adding ? <span className="spinner" /> : <span className="material-symbols-outlined">add</span>}
-          </button>
-          {addError && (
-            <div className="form-error" style={{ gridColumn: '1 / -1' }}>
-              <span className="material-symbols-outlined">error</span>{addError}
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="table-wrapper">
         <table className="data-table">
