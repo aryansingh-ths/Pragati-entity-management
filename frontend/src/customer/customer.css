@@ -3760,7 +3760,7 @@ html, body {
   background-attachment: fixed !important;
 }
 .lp-reg .lp-aurora { display: none !important; }
-.lp-summary { position: static !important; }
+.lp-summary { position: static !important; order: 1 !important; }
 .lp-summary-name, .lp-summary-items b { color: #111827 !important; }
 
 /* 12. Fix Billing Toggle Visibility */

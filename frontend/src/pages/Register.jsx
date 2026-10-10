@@ -178,12 +178,6 @@ function StepProducts({ products, loading, error, reload, selected, toggle, cycl
                 <span className="lp-choose-icon"><span className="material-symbols-outlined">{p.icon || 'apps'}</span></span>
                 <span className="lp-choose-body">
                   <b>{p.name}</b>
-                  <small>{p.tagline || p.description || 'Pragati product'}</small>
-                  {(p.features || []).length > 0 && (
-                    <span className="lp-choose-tags">
-                      {p.features.slice(0, 3).map((f) => <i key={f}>{f}</i>)}
-                    </span>
-                  )}
                 </span>
                 <span className="lp-choose-price">
                   <b>{p.price > 0 ? inr(cycle === 'yearly' ? p.price * config.yearly_months_charged : p.price) : 'Free'}</b>
