@@ -32,7 +32,7 @@ async function firePortalWebhooks(tenant, event) {
 
   // Fetch products from database to get their webhook URLs
   const productDocs = await GlobalProduct.find({ slug: { $in: products } });
-  
+
   await Promise.allSettled(
     productDocs.map(async (productDoc) => {
       const url = productDoc.webhook_url;
@@ -63,7 +63,7 @@ async function firePortalWebhooks(tenant, event) {
 }
 
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '10mb' }));
 
 // ─── MongoDB Connection ───────────────────────────────────────────────────────
 // The control plane owns ONLY its own database. Other platforms (e.g. RMS, SMS) must
@@ -110,6 +110,7 @@ const globalProductSchema = new mongoose.Schema(
     features: { type: [String], default: [] },
     icon: { type: String, default: 'apps' }, // Material Symbols icon name
     image: { type: String, default: '' }, // Optional product image URL shown on landing cards
+    pdf: { type: String, default: '' }, // Optional product PDF base64 string
   },
   { timestamps: true }
 );
@@ -219,7 +220,7 @@ const systemConfigSchema = new mongoose.Schema({
     default: [{ name: 'GST', rate: 18 }]
   },
   yearly_months_charged: { type: Number, default: 10 },
-    upi_id: { type: String, default: '' }
+  upi_id: { type: String, default: '' }
 }, { timestamps: true });
 const SystemConfig = mongoose.model('SystemConfig', systemConfigSchema);
 
@@ -274,9 +275,9 @@ app.post('/api/super/login', async (req, res) => {
     }
 
     const token = jwt.sign({ role: 'SuperAdmin', username }, JWT_SECRET, { expiresIn: '8h' });
-    
+
     await logAudit(username, 'LOGIN', 'System', 'SuperAdmin');
-    
+
     return res.json({ token, username });
   } catch (err) {
     return res.status(500).json({ error: 'Login failed' });
@@ -347,8 +348,8 @@ app.post('/api/super/entities', superAdminAuth, async (req, res) => {
     await tenant.save();
 
     // Auto-provision default Admin user
-    const defaultUsername = slug + '_admin';
-    const defaultPassword = 'Admin@1234';
+    const defaultUsername = contact_email || (slug + '_admin');
+    const defaultPassword = generatePassword();
     const password_hash = await bcrypt.hash(defaultPassword, 10);
 
     const adminUser = new User({ entity_id, username: defaultUsername, password_hash, role: 'Admin' });
@@ -498,7 +499,7 @@ app.get('/api/super/products', superAdminAuth, async (req, res) => {
 // POST /api/super/products
 app.post('/api/super/products', superAdminAuth, async (req, res) => {
   try {
-    const { name, slug, webhook_url, description, price, tagline, features, icon, image } = req.body;
+    const { name, slug, webhook_url, description, price, tagline, features, icon, image, pdf } = req.body;
     if (!name || !slug) return res.status(400).json({ error: 'Name and slug are required' });
 
     if (!/^[a-zA-Z0-9-]+$/.test(slug)) {
@@ -510,7 +511,7 @@ app.post('/api/super/products', superAdminAuth, async (req, res) => {
 
     const product = new GlobalProduct({
       name, slug, webhook_url: webhook_url || '', description, price: price || 0,
-      tagline: tagline || '', features: cleanFeatures(features), icon: icon || 'apps', image: (image || '').trim(),
+      tagline: tagline || '', features: cleanFeatures(features), icon: icon || 'apps', image: (image || '').trim(), pdf: (pdf || '').trim(),
     });
     await product.save();
 
@@ -525,7 +526,7 @@ app.post('/api/super/products', superAdminAuth, async (req, res) => {
 // PUT /api/super/products/:id
 app.put('/api/super/products/:id', superAdminAuth, async (req, res) => {
   try {
-    const { name, description, price, webhook_url, tagline, features, icon, image } = req.body;
+    const { name, description, price, webhook_url, tagline, features, icon, image, pdf } = req.body;
     const update = {};
     if (name !== undefined) update.name = name;
     if (description !== undefined) update.description = description;
@@ -535,6 +536,7 @@ app.put('/api/super/products/:id', superAdminAuth, async (req, res) => {
     if (features !== undefined) update.features = cleanFeatures(features);
     if (icon !== undefined) update.icon = icon || 'apps';
     if (image !== undefined) update.image = (image || '').trim();
+    if (pdf !== undefined) update.pdf = (pdf || '').trim();
 
     const product = await GlobalProduct.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -590,16 +592,16 @@ app.put('/api/super/config', superAdminAuth, async (req, res) => {
   try {
     const { taxes, yearly_months_charged, upi_id } = req.body;
     let config = await getConfig();
-    
+
     if (taxes !== undefined && Array.isArray(taxes)) {
       config.taxes = taxes.map(t => ({ name: t.name, rate: parseFloat(t.rate) || 0 }));
     }
     if (yearly_months_charged !== undefined) config.yearly_months_charged = parseInt(yearly_months_charged, 10);
-      if (upi_id !== undefined) config.upi_id = upi_id;
-    
+    if (upi_id !== undefined) config.upi_id = upi_id;
+
     await config.save();
     await logAudit(req.superAdmin.username, 'UPDATE', 'Config', 'SystemConfig', { taxes, yearly_months_charged });
-    
+
     return res.json(config);
   } catch (err) {
     return res.status(500).json({ error: 'Failed to update config' });
@@ -898,7 +900,7 @@ const round2 = (n) => Math.round(n * 100) / 100;
 function computeAmount(products, billing_cycle, config) {
   const monthly = products.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
   const subtotal = round2(billing_cycle === 'yearly' ? monthly * config.yearly_months_charged : monthly);
-  
+
   let totalTaxes = 0;
   const taxesList = config.taxes || [{ name: 'GST', rate: 18 }];
   const computedTaxes = taxesList.map(t => {
@@ -990,7 +992,7 @@ app.get('/api/public/products', async (req, res) => {
   try {
     const products = await GlobalProduct.find()
       .sort({ createdAt: 1 })
-      .select('name slug description price tagline features icon image')
+      .select('name slug description price tagline features icon image pdf')
       .lean();
     res.set('Cache-Control', 'no-store');
     return res.json(products);
@@ -1136,7 +1138,7 @@ app.post('/api/public/register/pay', rateLimit('pay', 20, 10 * 60 * 1000), async
 
     // ── Payment succeeded → provision the tenant and its Admin user ──
     const entity_id = 'ent_' + order.company.slug.replace(/-/g, '_') + '_' + Date.now();
-    const username = order.company.slug + '_admin';
+    const username = order.company.contact_email || (order.company.slug + '_admin');
     const password = generatePassword();
 
     const tenant = await Tenant.create({
@@ -1205,7 +1207,7 @@ app.post('/api/public/register/pay', rateLimit('pay', 20, 10 * 60 * 1000), async
   } catch (err) {
     console.error('[register/pay]', err);
     // Payment may have been captured but provisioning failed — flag for manual review, never lose it silently.
-    await release(charged ? 'needs_review' : 'created').catch(() => {});
+    await release(charged ? 'needs_review' : 'created').catch(() => { });
     return res.status(500).json({ error: 'Something went wrong while setting up your account. If you were charged, contact support with order ' + order.order_id + '.' });
   }
 });

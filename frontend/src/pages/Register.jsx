@@ -92,7 +92,7 @@ function Summary({ items, cycle, amount, locked, config }) {
             <li key={p.slug} style={{ '--c': accentFor(p._idx ?? i) }}>
               <span className="lp-summary-ico"><span className="material-symbols-outlined">{p.icon || 'apps'}</span></span>
               <span className="lp-summary-name">{p.name}</span>
-              <b>{inr(cycle === 'yearly' ? p.price * YEARLY_MONTHS : p.price)}</b>
+              <b>{inr(cycle === 'yearly' ? p.price * config.yearly_months_charged : p.price)}</b>
             </li>
           ))}
         </ul>

@@ -82,16 +82,34 @@ function Hero({ products, loading }) {
   const preview = products.slice(0, 3);
 
   return (
-    <section className="lp-hero">
-      <div className="lp-container lp-hero-grid">
+    <section className="lp-hero" style={{ position: 'relative', overflow: 'hidden' }}>
+      <video
+        src="/hero-section-video.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0
+        }}
+      />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(32,49,68,0.85) 0%, rgba(32,49,68,0.4) 40%, rgba(32,49,68,0) 80%)', zIndex: 1 }} />
+
+      <div className="lp-container lp-hero-grid" style={{ position: 'relative', zIndex: 2 }}>
         <div className="lp-hero-copy">
-          <span className="lp-pill lp-fade-up" style={{ animationDelay: '60ms' }}>
+          <span className="lp-pill lp-fade-up" style={{ animationDelay: '60ms', borderColor: 'rgba(255,255,255,0.2)' }}>
             <span className="lp-pill-dot" /> Self-service onboarding{" \u00b7 "}No waiting
           </span>
           <h1 className="lp-h1 lp-fade-up" style={{ animationDelay: '140ms' }}>
             One platform for <span className="lp-gradient-text">every tool</span> your business runs on
           </h1>
-          <p className="lp-lead lp-fade-up" style={{ animationDelay: '220ms' }}>
+          <p className="lp-lead lp-fade-up" style={{ animationDelay: '220ms', color: '#f8fafc' }}>
             Explore the Pragati product suite, register your business in minutes and get your login
             credentials the moment your payment completes.
           </p>
@@ -105,42 +123,9 @@ function Hero({ products, loading }) {
               <span className="material-symbols-outlined">expand_more</span>
             </button>
           </div>
-
         </div>
 
-        <div className="lp-hero-visual lp-fade-up" style={{ animationDelay: '260ms' }} aria-hidden="true">
-          <div className="lp-float-chip lp-chip-a">
-            <span className="material-symbols-outlined" style={{ color: '#34b98a' }}>check_circle</span>
-            <div><b>Payment successful</b><small>Order confirmed</small></div>
-          </div>
-          <div className="lp-float-chip lp-chip-b">
-            <span className="material-symbols-outlined" style={{ color: '#f2a93b' }}>key</span>
-            <div><b>Credentials ready</b><small>Sign in now</small></div>
-          </div>
-
-          <div className="lp-mock">
-            <div className="lp-mock-top">
-              <span /><span /><span />
-              <em>your-workspace.pragati</em>
-            </div>
-            <div className="lp-mock-body">
-              <div className="lp-mock-title">Your products</div>
-              {(loading ? [0, 1, 2] : preview).map((p, i) => (
-                <div key={p._id || i} className="lp-mock-row" style={{ '--c': accentFor(i), animationDelay: `${600 + i * 160}ms` }}>
-                  <span className="lp-mock-ico material-symbols-outlined">{p.icon || 'apps'}</span>
-                  <div className="lp-mock-lines">
-                    <b>{p.name || <i className="lp-skel" style={{ width: 90 }} />}</b>
-                    <i className="lp-mock-bar"><i style={{ width: `${62 + i * 14}%` }} /></i>
-                  </div>
-                  <span className="lp-mock-badge">Active</span>
-                </div>
-              ))}
-              <div className="lp-mock-foot">
-                <span className="lp-pulse-dot" /> Provisioned automatically
-              </div>
-            </div>
-          </div>
-        </div>
+        <div className="lp-hero-visual" />
       </div>
     </section>
   );
@@ -149,23 +134,23 @@ function Hero({ products, loading }) {
 function StatsStrip({ count }) {
   return (
     <Reveal className="lp-container">
-      <div className="lp-stats">
-        <div className="lp-stat">
+      <div className="lp-stats" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center' }}>
+        <div className="lp-stat" style={{ flex: '1 1 120px' }}>
           <div className="lp-stat-icon"><span className="material-symbols-outlined">inventory_2</span></div>
           <b><CountUp to={count} /></b>
           <span>Products available</span>
         </div>
-        <div className="lp-stat">
+        <div className="lp-stat" style={{ flex: '1 1 120px' }}>
           <div className="lp-stat-icon"><span className="material-symbols-outlined">timer</span></div>
           <b><CountUp to={5} prefix="<" suffix=" min" /></b>
           <span>Typical setup time</span>
         </div>
-        <div className="lp-stat">
+        <div className="lp-stat" style={{ flex: '1 1 120px' }}>
           <div className="lp-stat-icon"><span className="material-symbols-outlined">payments</span></div>
           <b><CountUp to={3} /></b>
           <span>Ways to pay</span>
         </div>
-        <div className="lp-stat">
+        <div className="lp-stat" style={{ flex: '1 1 120px' }}>
           <div className="lp-stat-icon"><span className="material-symbols-outlined">cloud_done</span></div>
           <b><CountUp to={100} suffix="%" /></b>
           <span>Cloud based</span>
@@ -190,9 +175,9 @@ function ProductCard({ p, i }) {
 
   return (
     <Reveal delay={(i % 3) * 90} className="lp-pcard-wrap">
-      <article 
-        className="lp-pcard" 
-        style={{ '--c': accentFor(i), cursor: 'pointer' }} 
+      <article
+        className="lp-pcard"
+        style={{ '--c': accentFor(i), cursor: 'pointer' }}
         onMouseMove={onMove}
         onClick={() => setExpanded(!expanded)}
       >
@@ -204,16 +189,39 @@ function ProductCard({ p, i }) {
         </div>
         <h3>{p.name}</h3>
         <p className="lp-pcard-desc">{p.description || 'A powerful tool from the Pragati suite.'}</p>
-        
-        {expanded && features.length > 0 && (
-          <ul className="lp-pcard-features">
-            {features.map((f, fi) => (
-              <li key={fi}>
-                <span className="material-symbols-outlined">check</span>
-                {f}
-              </li>
-            ))}
-          </ul>
+
+        {expanded && (features.length > 0 || p.pdf) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '12px' }}>
+            {features.length > 0 && (
+              <ul className="lp-pcard-features" style={{ margin: 0 }}>
+                {features.map((f, fi) => (
+                  <li key={fi}>
+                    <span className="material-symbols-outlined">check</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {p.pdf && (
+              <button 
+                type="button"
+                className="lp-btn lp-btn-soft" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fetch(p.pdf)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      const url = URL.createObjectURL(blob);
+                      window.open(url, '_blank');
+                    });
+                }}
+                style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>picture_as_pdf</span>
+                View Details PDF
+              </button>
+            )}
+          </div>
         )}
 
         <div className="lp-pcard-foot">
@@ -233,8 +241,8 @@ function ProductCard({ p, i }) {
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
         </div>
-        
-        {features.length > 0 && (
+
+        {(features.length > 0 || p.pdf) && (
           <div style={{ textAlign: 'center', marginTop: '16px', opacity: 0.6 }}>
             <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--lp-ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
@@ -368,36 +376,31 @@ function CtaBanner() {
 export function Footer() {
   return (
     <footer className="lp-footer">
-      <div className="lp-footer-glow" aria-hidden="true" />
-      <div className="lp-container lp-footer-inner">
-        <div className="lp-footer-brand">
-          <BrandLogo size={64} textSize="38px" />
-          <p>Pragati by Techhansa{" \u2014 "}a connected suite of business products, onboarded in minutes.</p>
-          <div className="lp-footer-chips">
-            <span><i className="material-symbols-outlined">bolt</i>Instant setup</span>
-            <span><i className="material-symbols-outlined">lock</i>Secure payments</span>
-            <span><i className="material-symbols-outlined">cloud_done</i>Cloud based</span>
+      <div className="lp-container lp-footer-inner" style={{ padding: '64px 0 48px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '48px' }}>
+        <div className="lp-footer-brand" style={{ maxWidth: '400px' }}>
+          <BrandLogo size={48} textSize="32px" />
+          <p style={{ marginTop: '16px', fontSize: '15px', lineHeight: '1.6' }}>Pragati by Techhansa{" \u2014 "}a connected suite of business products, onboarded in minutes.</p>
+        </div>
+        
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '48px' }}>
+          <div className="lp-footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '120px' }}>
+            <b style={{ marginBottom: '8px' }}>Explore</b>
+            {NAV_LINKS.map((l) => (
+              <button key={l.id} onClick={() => scrollToId(l.id)} style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                {l.label}
+              </button>
+            ))}
           </div>
-        </div>
-        <div className="lp-footer-links">
-          <b>Explore</b>
-          {NAV_LINKS.map((l) => (
-            <button key={l.id} onClick={() => scrollToId(l.id)}>
-              <i className="material-symbols-outlined">arrow_outward</i>{l.label}
-            </button>
-          ))}
-          <Link to="/contact"><i className="material-symbols-outlined">arrow_outward</i>Contact us</Link>
-          <Link to="/register"><i className="material-symbols-outlined">arrow_outward</i>Get started</Link>
-        </div>
-        <div className="lp-footer-admin">
-          <b>Team access</b>
-          <div className="lp-admin-card">
-            <span className="lp-admin-ico"><i className="material-symbols-outlined">admin_panel_settings</i></span>
-            <p>Manage products, customers and billing from the control panel.</p>
-            <Link id="admin-login-btn" to="/login" className="lp-btn lp-btn-outline">
-              Admin Login
-              <span className="material-symbols-outlined">arrow_forward</span>
-            </Link>
+          
+          <div className="lp-footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '120px' }}>
+            <b style={{ marginBottom: '8px' }}>Company</b>
+            <Link to="/contact">Contact us</Link>
+            <Link to="/register">Get started</Link>
+          </div>
+
+          <div className="lp-footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '120px' }}>
+            <b style={{ marginBottom: '8px' }}>Team</b>
+            <Link to="/login">Admin Login</Link>
           </div>
         </div>
       </div>
@@ -431,7 +434,6 @@ export default function Landing() {
         <ProductsSection products={products} loading={loading} error={error} reload={reload} />
         <HowItWorks />
         <Why />
-        <CtaBanner />
       </main>
       <Footer />
     </div>

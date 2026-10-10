@@ -17,6 +17,7 @@ export default function Products() {
   const [tagline, setTagline] = useState('');
   const [icon, setIcon] = useState('apps');
   const [image, setImage] = useState('');
+  const [pdf, setPdf] = useState('');
   const [features, setFeatures] = useState('');
   const [error, setError] = useState(null);
 
@@ -49,7 +50,7 @@ export default function Products() {
       if (editingId) {
         const res = await apiFetch(`/api/super/products/${editingId}`, {
           method: 'PUT',
-          body: JSON.stringify({ name, webhook_url: webhookUrl, description, price: Number(price), tagline, icon, image, features })
+          body: JSON.stringify({ name, webhook_url: webhookUrl, description, price: Number(price), tagline, icon, image, pdf, features })
         });
         if (res.ok) {
           const p = await res.json();
@@ -62,7 +63,7 @@ export default function Products() {
       } else {
         const res = await apiFetch('/api/super/products', {
           method: 'POST',
-          body: JSON.stringify({ name, slug: finalSlug, webhook_url: webhookUrl, description, price: Number(price), tagline, icon, image, features })
+          body: JSON.stringify({ name, slug: finalSlug, webhook_url: webhookUrl, description, price: Number(price), tagline, icon, image, pdf, features })
         });
         if (res.ok) {
           const p = await res.json();
@@ -91,6 +92,7 @@ export default function Products() {
     setTagline('');
     setIcon('apps');
     setImage('');
+    setPdf('');
     setFeatures('');
     setError(null);
   };
@@ -123,6 +125,21 @@ export default function Products() {
     reader.readAsDataURL(file);
   };
 
+  const handlePdfFile = (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.type !== 'application/pdf') { setError('Please choose a PDF file'); return; }
+    if (file.size > 8 * 1024 * 1024) { setError('PDF must be under 8 MB'); return; }
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPdf(reader.result);
+    };
+    reader.onerror = () => setError('Could not read that PDF');
+    reader.readAsDataURL(file);
+  };
+
   const openAdd = () => {
     closeForm();
     setShowForm(true);
@@ -138,6 +155,7 @@ export default function Products() {
     setTagline(p.tagline || '');
     setIcon(p.icon || 'apps');
     setImage(p.image || '');
+    setPdf(p.pdf || '');
     setFeatures((p.features || []).join('\n'));
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -220,6 +238,22 @@ export default function Products() {
                     </label>
                     {image && (
                       <button type="button" className="btn btn-ghost" onClick={() => setImage('')}>
+                        <span className="material-symbols-outlined">delete</span>Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Product Details PDF (optional)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {pdf && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>PDF Attached</span>}
+                    <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                      <span className="material-symbols-outlined">upload_file</span>
+                      {pdf ? 'Change PDF' : 'Upload PDF'}
+                      <input type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handlePdfFile} />
+                    </label>
+                    {pdf && (
+                      <button type="button" className="btn btn-ghost" onClick={() => setPdf('')}>
                         <span className="material-symbols-outlined">delete</span>Remove
                       </button>
                     )}
