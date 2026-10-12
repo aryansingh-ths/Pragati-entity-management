@@ -56,66 +56,107 @@ export default function Contact() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '48px', alignItems: 'start', maxWidth: '900px', margin: '0 auto' }}>
             
-            <div style={{ background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(16px)', border: '1px solid var(--lp-line)', borderRadius: '24px', padding: '40px', boxShadow: 'var(--lp-shadow)' }}>
+            <div className="lp-contact-card" style={{ background: '#1a2a3a', border: '1px solid #334155', borderRadius: '20px', padding: '40px', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)' }}>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div>
-                  <label htmlFor="name" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--lp-ink)' }}>Name</label>
+                  <label htmlFor="name" className="lp-contact-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#f8fafc', fontSize: '14px' }}>Name</label>
                   <input
                     id="name"
                     name="name"
                     type="text"
                     required
+                    placeholder="Your full name"
                     value={formData.name}
                     onChange={handleChange}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--lp-line)', background: '#fff', fontSize: '15px', color: 'var(--lp-ink)', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--lp-brand)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--lp-line)'}
+                    className="lp-contact-input"
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #cbd5e1', background: '#ffffff', fontSize: '15px', color: '#0f172a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'var(--lp-brand)'; e.target.style.boxShadow = '0 0 0 3px rgba(234, 88, 12, 0.2)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#cbd5e1'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--lp-ink)' }}>Email Address</label>
+                  <label htmlFor="email" className="lp-contact-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#f8fafc', fontSize: '14px' }}>Email Address</label>
                   <input
                     id="email"
                     name="email"
                     type="email"
                     required
+                    placeholder="name@company.com"
                     value={formData.email}
                     onChange={handleChange}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--lp-line)', background: '#fff', fontSize: '15px', color: 'var(--lp-ink)', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--lp-brand)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--lp-line)'}
+                    className="lp-contact-input"
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #cbd5e1', background: '#ffffff', fontSize: '15px', color: '#0f172a', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'var(--lp-brand)'; e.target.style.boxShadow = '0 0 0 3px rgba(234, 88, 12, 0.2)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#cbd5e1'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div>
-                  <label htmlFor="category" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--lp-ink)' }}>Category</label>
-                  <select
-                    id="category"
-                    name="category"
-                    required
-                    value={formData.category}
-                    onChange={handleChange}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--lp-line)', background: '#fff', fontSize: '15px', color: 'var(--lp-ink)', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s', appearance: 'none' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--lp-brand)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--lp-line)'}
-                  >
-                    <option value="General">General Query</option>
-                    {!loading && products && products.map(p => (
-                      <option key={p.id} value={`Product: ${p.name}`}>Product: {p.name}</option>
-                    ))}
-                  </select>
+                  <label htmlFor="category" className="lp-contact-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#f8fafc', fontSize: '14px' }}>Category</label>
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      id="category"
+                      name="category"
+                      required
+                      value={formData.category}
+                      onChange={handleChange}
+                      className="lp-contact-select"
+                      style={{
+                        width: '100%',
+                        padding: '12px 42px 12px 16px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #cbd5e1',
+                        background: '#ffffff',
+                        fontSize: '15px',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'pointer',
+                        appearance: 'none',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'none',
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 16px center',
+                        backgroundSize: '18px',
+                        transition: 'border-color 0.2s, box-shadow 0.2s'
+                      }}
+                      onFocus={(e) => { e.target.style.borderColor = 'var(--lp-brand)'; e.target.style.boxShadow = '0 0 0 3px rgba(234, 88, 12, 0.2)'; }}
+                      onBlur={(e) => { e.target.style.borderColor = '#cbd5e1'; e.target.style.boxShadow = 'none'; }}
+                    >
+                      <option value="General" style={{ color: '#0f172a', background: '#ffffff' }}>General Query</option>
+                      <option value="Sales & Pricing" style={{ color: '#0f172a', background: '#ffffff' }}>Sales & Pricing</option>
+                      <option value="Technical Support" style={{ color: '#0f172a', background: '#ffffff' }}>Technical Support</option>
+                      <option value="Partnership / Enterprise" style={{ color: '#0f172a', background: '#ffffff' }}>Partnership / Enterprise</option>
+                      {!loading && products && products.length > 0 && (
+                        <optgroup label="Products" style={{ color: '#475569', background: '#ffffff', fontWeight: '600' }}>
+                          {products.map(p => (
+                            <option
+                              key={p._id || p.id || p.slug || p.name}
+                              value={`Product: ${p.name}`}
+                              style={{ color: '#0f172a', background: '#ffffff', fontWeight: 'normal' }}
+                            >
+                              {p.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  </div>
                 </div>
                 <div>
-                  <label htmlFor="message" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--lp-ink)' }}>How can we help?</label>
+                  <label htmlFor="message" className="lp-contact-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#f8fafc', fontSize: '14px' }}>How can we help?</label>
                   <textarea
                     id="message"
                     name="message"
                     required
                     rows={4}
+                    placeholder="How can we help you? Describe your question or requirement..."
                     value={formData.message}
                     onChange={handleChange}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--lp-line)', background: '#fff', fontSize: '15px', color: 'var(--lp-ink)', outline: 'none', resize: 'vertical', minHeight: '100px', transition: 'border-color 0.2s, box-shadow 0.2s' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--lp-brand)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--lp-line)'}
+                    className="lp-contact-textarea"
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #cbd5e1', background: '#ffffff', fontSize: '15px', color: '#0f172a', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: '120px', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'var(--lp-brand)'; e.target.style.boxShadow = '0 0 0 3px rgba(234, 88, 12, 0.2)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#cbd5e1'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 

@@ -3784,3 +3784,49 @@ html, body {
     flex: 1 1 45% !important;
   }
 }
+
+/* 15. Contact Page Styling */
+.lp-contact-card {
+  background: #1a2a3a !important;
+  border: 1px solid #334155 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.lp-contact-label {
+  color: #f8fafc !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  display: block !important;
+  margin-bottom: 8px !important;
+}
+
+.lp-contact-input,
+.lp-contact-select,
+.lp-contact-textarea {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  font-size: 15px !important;
+}
+
+.lp-contact-input:focus,
+.lp-contact-select:focus,
+.lp-contact-textarea:focus {
+  border-color: #ea580c !important;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2) !important;
+}
+
+.lp-contact-input::placeholder,
+.lp-contact-textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.lp-contact-select option,
+.lp-contact-select optgroup {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+}
+

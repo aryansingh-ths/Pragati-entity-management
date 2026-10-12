@@ -401,6 +401,7 @@ export function Footer() {
           <div className="lp-footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '120px' }}>
             <b style={{ marginBottom: '8px' }}>Team</b>
             <Link to="/login">Admin Login</Link>
+            <a href="https://rmslicense.techhansatechnology.com/" target="_blank" rel="noopener noreferrer">HMS License Admin</a>
           </div>
         </div>
       </div>
